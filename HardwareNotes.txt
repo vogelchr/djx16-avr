@@ -1,0 +1,75 @@
+* Hardware *
+
+            8051/89c55/ATmega162 pinout
+
+
+                   +-------\__/-------+
+U10 LE Master LEDs | 1  PB0    Vcc 40 |  Vcc
+U12 LE KeyMtx      | 2  PB1    PA0 39 |  \
+U12 \OE KeyMtx     | 3  PB2    PA1 38 |   \
+U5 LE  Analog MUX  | 4  PB3    PA2 37 |    \
+U15 \RD ADC        | 5  PB4    PA3 36 |     \ AD0-Bus
+?                  | 6  PB5    PA4 35 |     / (D0..D7 of all '573 +
+EE \CS (inv to RAM)| 7  PB6    PA5 34 |    /   SRAM + EEprom + ADC?)
+?                  | 8  PB7    PA6 33 |   /
+                   | 9  #Res   PA7 32 |  /
+                   | 10 PD0    ALE 31 |  Vcc
+                   | 11 PD1    PE1 30 |
+                   | 12 PD2    PE2 29 |
+U9 LE 7-segment    | 13 PD3    PC7 28 |
+U8 LE 7-segment    | 14 PD4    PC6 27 |
+U11 LE Chan. LEDs  | 15 PD5    PC5 26 |
+                   | 16 PD6    PC4 25 |
+                   | 17 PD7    PC3 24 |
+                   | 18 Xt     PC2 23 |
+                   | 19 Xt     PC1 22 |
+               GND | 20 GND    PC0 21 |
+                   +------------------+
+
+U2 HC573
+
+U5 74HC573 (Octal D-Type Transparent Latch; 3-state)
+\OE   = GND
+D0..D7 = U1(8051) AD0..AD7
+Q0    = ADC \WR
+Q1    = U14 \E
+Q2    = U13 \E
+
+U7 HC00 Quad NAND
+
+U8 7 segment latch
+
+U9 7 segment latch
+
+U10 HC573 - Driver for Master LEDs
+
+U11 HC573 - Driver for Channel LEDs
+
+U12 HC573 - Driver for Key Matrix
+
+U13 HFC4051 8 channel analog multiplexer/demultiplexer
+\E     = U5 Q2
+S1     = U5 Q5
+S2     = U5 Q4
+S3     = U5 Q3
+Z      = U15 Vin+ via R
+Y0..Y7 = Pot "Channel 1" .. "Channel 8"
+
+U14 HFC4051 8 channel analog multiplexer/demultiplexer
+\E     = U5 Q1
+S1     = U5 Q5
+S2     = U5 Q4
+S3     = U5 Q3
+Z      = U15 Vin+ via R
+Y2     = Pot "Speed"
+Y1     = Pot "Level"
+Y0     = Pot "Master"
+
+U15 ADC0804 (Texas Instruments 8-bit uController compatible A/D converter)
+D0..D7 = U1(8051) AD0..AD7
+\CS    = GND
+\RD    = U1(8051) #5 = P1.5(8051) = PB4(AVR)
+\WD    = U5(573) #19 = Q0
+
+
+
