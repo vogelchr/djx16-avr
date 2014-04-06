@@ -2,6 +2,7 @@
 #define DJX16_HE_H
 
 #include <avr/io.h>
+#include <avr/interrupt.h>
 
 enum DJX16_LATCH {
 	DJX16_MASTER_LED,
@@ -12,7 +13,9 @@ enum DJX16_LATCH {
 	DJX16_CHAN_LED
 };
 
-extern void
-djx16_latch(enum DJX16_LATCH latch, unsigned char value);
+/* get a tick-counter that is increased with about 500 Hz */
+extern uint32_t djx16_hw_tick_ctr(void);
+extern uint8_t djx16_hw_adc[16];
+
 
 #endif

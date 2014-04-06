@@ -1,17 +1,15 @@
 #include "djx16_hw.h"
 #include "djx16_led.h"
+#include "djx16_key.h"
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-SIGNAL(TIMER0_OVF_vect){ /* timer/counter 0 overflow */
-	djx16_led_update();
-}
-
 int
 main(void)
 {
-	uint16_t ctr,i;
+	uint16_t i;
+	uint8_t v,c;
 
 	DDRA  = 0x00;
 	PORTA = 0xff; /* pullup */
@@ -38,14 +36,30 @@ main(void)
 	djx16_led_init();
 	sei(); /* enable interrupts */
 
+	djx16_led_7seg_hex(0, c);
+	djx16_led_7seg(1, 0);
+	djx16_led_7seg_hex(2, v >> 4);
+	djx16_led_7seg_hex(3, v & 0x0f);
+
+
 	while(1){
 		i=0;
 		do { } while(++i);
-		ctr++;
 
-		djx16_led_set_7seg_hex(0, 0x0f & (ctr >> 12));
-		djx16_led_set_7seg_hex(1, 0x0f & (ctr >>  8));
-		djx16_led_set_7seg_hex(2, 0x0f & (ctr >>  4));
-		djx16_led_set_7seg_hex(3, 0x0f &  ctr       );
+		if ((++c) > 7)
+			c = 0;
+
+		djx16_led_7seg_hex(2, djx16_hw_adc[0] >> 4);
+		djx16_led_7seg_hex(3, djx16_hw_adc[0] & 0x0f);
+#if 0
+		cli();
+		if (djx16_key_pressed) {
+			djx16_led_7seg_hex(0, djx16_key_row);
+			djx16_led_7seg_hex(2, djx16_key_pressed >> 4);
+			djx16_led_7seg_hex(3, djx16_key_pressed & 0x0f);
+			djx16_key_pressed = djx16_key_row = 0;
+		}
+		sei();
+#endif
 	}
 }

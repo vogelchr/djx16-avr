@@ -6,18 +6,20 @@ PROGRAMMER_DUDE = -Pusb -c dragon_isp
 
 F_CPU=24000000
 
+CROSS?=avr-
 AVRDUDE=avrdude
-OBJCOPY=avr-objcopy
-OBJDUMP=avr-objdump
-CC=avr-gcc
-LD=avr-gcc
+OBJCOPY=$(CROSS)objcopy
+OBJDUMP=$(CROSS)objdump
+CC=$(CROSS)gcc
+LD=$(CROSS)gcc
+SIZE=$(CROSS)size
 
 LDFLAGS=-Wall -g -mmcu=$(DEVICE_CC)
 CPPFLAGS=-I. -I$(VUSB) -DF_CPU=$(F_CPU)
 CFLAGS=-mmcu=$(DEVICE_CC) -Os -Wall -g
 ASFLAGS=$(CFLAGS)
 
-OBJS = djx16.o djx16_hw.o djx16_led.o
+OBJS = djx16.o djx16_hw.o djx16_led.o djx16_key.o
 
 VPATH = $(VUSB)
 
@@ -26,6 +28,7 @@ $(PROJECT).bin : $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(OBJS)
 
 %.hex : %.bin
+	$(SIZE) --mcu=$(DEVICE_CC) -C $^
 	$(OBJCOPY) -j .text -j .data -O ihex $^ $@ || (rm -f $@ ; false )
 
 %.lst : %.bin

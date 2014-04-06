@@ -72,4 +72,46 @@ D0..D7 = U1(8051) AD0..AD7
 \WD    = U5(573) #19 = Q0
 
 
+* Buttons *
+
+The key matrix works as follows: Output one single 0-bit corresponding to
+a specific row of the key matrix. (the others be set to 1) on the key
+matrix latch (\OE=PB2, \LE=PB1), set pullups on port A, read back port A.
+
+The bits in port A that are pulled low (columns) are your pressed bits.
+
+Name                :Row:Col:
+--------------------:---:---:
+Flash 1               0   0
+  :                   0   :
+Flash 8               0   7
+--------------------:---:---:
+Flash 9               1   0
+  :                   1   :
+Flash 16              1   7
+--------------------:---:---:
+Latch 9               2   0
+  :                   2   :
+Latch 16              2   7
+--------------------:---:---:
+Cross                 3   0
+Add/Kill              3   5
+Shift                 4   2
+--------------------:---:---:
+Button Setup/Step^    3   1
+End Step/Program      3   6
+Loop Exit/Loop        4   3
+--------------------:---:---:
+Fade Time Setup/Stepv 3   2
+Delete Program/Assign 3   7
+Audio/Chase           4   4
+--------------------:---:---:
+Cross Setup/Step ^    3   3
+Midi Channel/Patch    4   0
+Manual Setp/Tap Sync  4   5
+--------------------:---:---:
+Blind/Step v          3   4
+Full On               4   1
+Standby               4   6
+--------------------:---:---:
 
