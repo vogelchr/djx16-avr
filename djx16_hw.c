@@ -10,6 +10,14 @@
  * or ADC readout happens in this huge timer ISR
  */
 
+/* === data accessed by the ISR === */
+
+/* buffer for storing the multiplexed LED state */
+uint8_t djx16_led_buf[DJX16_LED_LENGTH];
+uint8_t djx16_led_masters[DJX16_N_MASTER_GROUPS*DJX16_N_MASTER_INTENS];
+static uint32_t tick_ctr;
+uint8_t djx16_hw_adc[16];
+
 /*
  * this macro latches value "val" into the HC573 buffer with its
  * LE pin connected to PORT/bit
@@ -28,11 +36,12 @@
 		(port) |= _BV(bit);                    \
         } while(0)
 
-
-// static uint8_t ISR_Counter;
-static uint32_t tick_ctr;
-
-uint8_t djx16_hw_adc[16];
+#define DJX16_LATCH_CHAN_LED(v)		LATCH(v, PORTD, 5)
+#define DJX16_LATCH_MASTER_LED(v)	LATCH(v, PORTB, 0)
+#define DJX16_LATCH_KEY_MTX(v)		LATCH(v, PORTB, 1)
+#define DJX16_LATCH_ADC_MUX(v)		LATCH(v, PORTB, 3)
+#define DJX16_LATCH_7SEG_ROW(v)		LATCH(v, PORTD, 4)
+#define DJX16_LATCH_7SEG_COL(v)		LATCH(v, PORTD, 3)
 
 SIGNAL(TIMER0_OVF_vect){ /* timer/counter 0 overflow */
 	uint8_t count, c_high;  /* 3 LSB and 5 not-so-LSB of tick counter */
@@ -53,8 +62,9 @@ SIGNAL(TIMER0_OVF_vect){ /* timer/counter 0 overflow */
 		goto skip_mux_leds;
 
 	v = djx16_led_buf[count];
-	LATCH(bit, PORTD, 4); /* latch DJX16_7SEG_ROW, LED row selector */
-	LATCH(v, PORTD, 3);   /* latch DJX16_7SEG_COL */
+
+	DJX16_LATCH_7SEG_ROW(bit);
+	DJX16_LATCH_7SEG_COL(v);
 
 skip_mux_leds:
 	/* ===== MASTER LEDS ============================================= */
@@ -66,16 +76,16 @@ skip_mux_leds:
 		offset = 4;
 
 	v = djx16_led_masters[offset];
-	LATCH(v, PORTD, 5); /* latch DJX16_CHAN_LED */
+	DJX16_LATCH_CHAN_LED(v);
 
 	v = djx16_led_masters[offset+1]; /* DJX16_MASTER_LED */
-	LATCH(v, PORTB, 0);
+	DJX16_LATCH_MASTER_LED(v);
 
 	/* ===== KEYS ==================================================== */
 	if (bit & 0xe0)
 		goto skip_keys;
 
-	LATCH(~bit, PORTB, 1); /* latch  -> DJX16_KEY_MTX */
+	DJX16_LATCH_KEY_MTX(~bit); /* latch  -> DJX16_KEY_MTX */
 
 	/* read in key matrix */
 	DDRA  = 0x00;       /* port A all inputs */
@@ -108,7 +118,7 @@ skip_keys:
 
 		if (count == 0)
 			v &= ~_BV(0); /* \WR = 0 in cycle 0, 1 in cycle 6 */
-		LATCH(v, PORTB, 3); /* \WR = 0 */
+		DJX16_LATCH_ADC_MUX(v);
 	}
 
 	if ( count == 7 ) {
@@ -132,60 +142,4 @@ extern uint32_t djx16_hw_tick_ctr(void){
 	return v;
 }
 
-#if 0
 
-static inline void
-djx16_latch_sleep(void)
-{
-	asm volatile ("nop;\n\t nop;\n\t nop;\n\t nop;\n\t nop;\n\t nop;");
-}
-
-void
-djx16_hw_latch(enum DJX16_LATCH latch, unsigned char value)
-{
-	DDRA = 0xff;
-	PORTA = value;
-
-	switch(latch){
-	case DJX16_MASTER_LED:
-		PORTB |= _BV(0);
-		djx16_latch_sleep();
-		PORTB &= ~_BV(0);
-		break;
-
-	case DJX16_KEY_MTX:
-		PORTB |= _BV(1);
-		djx16_latch_sleep();
-		PORTB &= ~_BV(1);
-		break;
-
-	case DJX16_ANALOX_MUX:
-		PORTB |= _BV(3);
-		djx16_latch_sleep();
-		PORTB &= ~_BV(3);
-		break;
-
-	case DJX16_7SEG_COL:
-		PORTD |= _BV(3);
-		djx16_latch_sleep();
-		PORTD &= ~_BV(3);
-		break;
-
-	case DJX16_7SEG_ROW:
-		PORTD |= _BV(4);
-		djx16_latch_sleep();
-		PORTD &= ~_BV(4);
-		break;
-
-	case DJX16_CHAN_LED:
-		PORTD |= _BV(5);
-		djx16_latch_sleep();
-		PORTD &= ~_BV(5);
-		break;
-	}
-
-	DDRA  = 0x00;
-	PORTA = 0x00;
-}
-
-#endif

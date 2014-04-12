@@ -4,14 +4,6 @@
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 
-/* buffer for storing the multiplexed LED state */
-uint8_t djx16_led_buf[DJX16_LED_LENGTH];
-uint8_t djx16_led_masters[DJX16_N_MASTER_GROUPS*DJX16_N_MASTER_INTENS];
-/* counter for LED updates, also shared by the ADC and mater led
- * updates, just makes the matrixx go dark a little
- */
-static uint8_t djx16_led_ctr=0;
-
 void
 djx16_led_init(void)
 {
@@ -65,32 +57,6 @@ djx16_led_update_digit_raw(unsigned char num, unsigned char code)
 {
 	djx16_led_buf[num]=code;
 }
-
-#if 0
-void
-djx16_led_update(void)
-{
-	int i;
-	unsigned char c;
-
-	if (djx16_led_ctr >= DJX16_LED_LENGTH) {
-		djx16_led_ctr = 0;
-	}
-
-	djx16_hw_latch(DJX16_7SEG_ROW, 1 << djx16_led_ctr);
-	djx16_hw_latch(DJX16_7SEG_COL, djx16_led_buf[djx16_led_ctr]);
-
-	c = 0;
-	for(i=0; i<8; i++)
-		if( i < djx16_led_ctr )
-			c |= (1<<i);
-	djx16_hw_latch(DJX16_CHAN_LED, c);
-	djx16_hw_latch(DJX16_MASTER_LED, c);
-
-	djx16_led_ctr++;
-}
-#endif
-
 
 void
 djx16_led_7seg(char index, char value)

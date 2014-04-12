@@ -9,13 +9,13 @@ enum ON_OFF_TOGGLE {
 
 /* order matches bit value in latch DJX16_7SEG_ROW */
 enum DJX16_LED_POS {
-	DJX16_LED_SEG3,
-	DJX16_LED_SEG2,
-	DJX16_LED_SEG1,
-	DJX16_LED_SEG0,
+	DJX16_LED_SEG3,		/* 1<<0 = 7seg LED, rightmost digit */
+	DJX16_LED_SEG2,		/*   :   */
+	DJX16_LED_SEG1,		/*   :   */
+	DJX16_LED_SEG0,		/* 1<<3 = 7seg LED, leftmost digit */
 	DJX16_LED_INDIC_A,
 	DJX16_LED_INDIC_B,
-	DJX16_LED_CH9_to_CH16,
+	DJX16_LED_CH9_to_CH16,	/* 1<<6 = Channel 9-16 LEDs */ 
 	DJX16_LED_INDIC_C,
 	DJX16_LED_LENGTH
 };
