@@ -5,6 +5,6 @@
 #define DJX16_KEY_ROW_FLASH9_16		1
 
 extern char
-djx16_key_scan(void);
+djx16_key_get(void);
 
 #endif

@@ -13,13 +13,13 @@
 /* === data accessed by the ISR === */
 
 /* buffer for storing the multiplexed LED state */
-uint8_t djx16_led_buf[DJX16_LED_LENGTH];
-uint8_t djx16_led_masters[DJX16_N_MASTER_GROUPS*DJX16_N_MASTER_INTENS];
-static uint32_t tick_ctr;
+uint8_t djx16_hw_led_buf[DJX16_LED_LENGTH];
+uint8_t djx16_hw_led_masters[DJX16_N_MASTER_GROUPS*DJX16_N_MASTER_INTENS];
+static uint32_t djx16_hw_tick_ctr;
 uint8_t djx16_hw_adc[DJX16_ADC_LENGTH];
 
-uint8_t djx16_key_row;
-uint8_t djx16_key_pressed;
+uint8_t djx16_hw_key_row;
+uint8_t djx16_hw_key_sense;
 uint8_t djx16_key_flash1_8;
 uint8_t djx16_key_flash9_16;
 
@@ -55,9 +55,9 @@ SIGNAL(TIMER0_OVF_vect){ /* timer/counter 0 overflow */
 	uint8_t offset;
 	uint8_t adc_chan;
 
-	tick_ctr++;                      /* global tick counter */
-	count  =  tick_ctr       & 0x07; /* 3 lowest bits */
-	c_high = (tick_ctr >> 3) & 0x1f; /* 5 next bits */
+	djx16_hw_tick_ctr++;                      /* global tick counter */
+	count  =  djx16_hw_tick_ctr       & 0x07; /* 3 lowest bits */
+	c_high = (djx16_hw_tick_ctr >> 3) & 0x1f; /* 5 next bits */
 	bit   = 1 << count;              /* used at various places below.. */
 
 	DDRA  = 0xff;          /* make sure we can write out... */
@@ -66,7 +66,7 @@ SIGNAL(TIMER0_OVF_vect){ /* timer/counter 0 overflow */
 	if (count >= DJX16_LED_LENGTH)
 		goto skip_mux_leds;
 
-	v = djx16_led_buf[count];
+	v = djx16_hw_led_buf[count];
 
 	DJX16_LATCH_7SEG_ROW(bit);
 	DJX16_LATCH_7SEG_COL(v);
@@ -80,10 +80,10 @@ skip_mux_leds:
 	else
 		offset = 4;
 
-	v = djx16_led_masters[offset];
+	v = djx16_hw_led_masters[offset];
 	DJX16_LATCH_CHAN_LED(v);
 
-	v = djx16_led_masters[offset+1]; /* DJX16_MASTER_LED */
+	v = djx16_hw_led_masters[offset+1]; /* DJX16_MASTER_LED */
 	DJX16_LATCH_MASTER_LED(v);
 
 	/* ===== KEYS ==================================================== */
@@ -105,8 +105,8 @@ skip_mux_leds:
 		djx16_key_flash9_16 = ~v;
 	} else {
 		if (v != 0xff) {
-			djx16_key_row     = count;
-			djx16_key_pressed = ~v;
+			djx16_hw_key_row     = count;
+			djx16_hw_key_sense = ~v;
 		}
 	}
 
@@ -149,7 +149,7 @@ skip_keys:
 extern uint32_t djx16_hw_tick_ctr(void){
 	uint32_t v;
 	cli();
-	v = tick_ctr;
+	v = djx16_hw_tick_ctr;
 	sei();
 	return v;
 }

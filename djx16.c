@@ -56,11 +56,11 @@ main(void)
 		djx16_led_7seg_hex(3, adc & 0x0f);
 #if 0
 		cli();
-		if (djx16_key_pressed) {
-			djx16_led_7seg_hex(0, djx16_key_row);
-			djx16_led_7seg_hex(2, djx16_key_pressed >> 4);
-			djx16_led_7seg_hex(3, djx16_key_pressed & 0x0f);
-			djx16_key_pressed = djx16_key_row = 0;
+		if (djx16_hw_key_sense) {
+			djx16_led_7seg_hex(0, djx16_hw_key_row);
+			djx16_led_7seg_hex(2, djx16_hw_key_sense >> 4);
+			djx16_led_7seg_hex(3, djx16_hw_key_sense & 0x0f);
+			djx16_hw_key_sense = djx16_hw_key_row = 0;
 		}
 		sei();
 #endif

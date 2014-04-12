@@ -8,17 +8,17 @@ void
 djx16_led_init(void)
 {
 	int i;
-	djx16_led_masters[0] = 0xff;
-	djx16_led_masters[2] = 0xff;
-	djx16_led_masters[4] = 0xff;
+	djx16_hw_led_masters[0] = 0xff;
+	djx16_hw_led_masters[2] = 0xff;
+	djx16_hw_led_masters[4] = 0xff;
 	
 	for(i=0; i<8; i++){
 		if (i & 1)
-			djx16_led_masters[0] &= ~(1 << i);
+			djx16_hw_led_masters[0] &= ~(1 << i);
 		if (i & 2)
-			djx16_led_masters[2] &= ~(1 << i);
+			djx16_hw_led_masters[2] &= ~(1 << i);
 		if (i & 4)
-			djx16_led_masters[4] &= ~(1 << i);
+			djx16_hw_led_masters[4] &= ~(1 << i);
 	}
 
 
@@ -55,7 +55,7 @@ const unsigned char font_7seg[] PROGMEM = {
 void
 djx16_led_update_digit_raw(unsigned char num, unsigned char code)
 {
-	djx16_led_buf[num]=code;
+	djx16_hw_led_buf[num]=code;
 }
 
 void
@@ -68,7 +68,7 @@ djx16_led_7seg(char index, char value)
 	 *    driver bit 3 is 1st segment
 	 * LED segments on are 0
 	 */
-	djx16_led_buf[3-index] = ~value;
+	djx16_hw_led_buf[3-index] = ~value;
 }
 
 void
@@ -100,13 +100,13 @@ djx16_led_indicator(char index, enum ON_OFF_TOGGLE onofftoggle)
 
 	switch (onofftoggle) {
 	case LED_ON:
-		djx16_led_buf[pos] &= ~bit;
+		djx16_hw_led_buf[pos] &= ~bit;
 		break;
 	case LED_OFF:
-		djx16_led_buf[pos] |= bit;
+		djx16_hw_led_buf[pos] |= bit;
 		break;
 	case LED_TOGGLE:
-		djx16_led_buf[pos] ^= bit;
+		djx16_hw_led_buf[pos] ^= bit;
 		break;
 	}
 }
