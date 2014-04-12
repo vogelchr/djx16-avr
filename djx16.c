@@ -1,6 +1,6 @@
-#include "djx16_hw.h"
 #include "djx16_led.h"
 #include "djx16_key.h"
+#include "djx16_adc.h"
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
@@ -43,14 +43,17 @@ main(void)
 
 
 	while(1){
+		uint8_t adc;
 		i=0;
 		do { } while(++i);
 
 		if ((++c) > 7)
 			c = 0;
 
-		djx16_led_7seg_hex(2, djx16_hw_adc[0] >> 4);
-		djx16_led_7seg_hex(3, djx16_hw_adc[0] & 0x0f);
+		adc = djx16_adc_get(DJX16_ADC_CH0);
+
+		djx16_led_7seg_hex(2, adc >> 4);
+		djx16_led_7seg_hex(3, adc & 0x0f);
 #if 0
 		cli();
 		if (djx16_key_pressed) {

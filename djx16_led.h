@@ -20,17 +20,13 @@ enum DJX16_LED_POS {
 	DJX16_LED_LENGTH
 };
 
+/* we have two groups of master LEDs (each 8 LEDs, logical)
+   each gruop has 3 different intensity bits (2^3 = 8 intensities) */
+
 #define DJX16_N_MASTER_GROUPS 2
 #define DJX16_N_MASTER_INTENS 3
 
-extern uint8_t djx16_led_buf[DJX16_LED_LENGTH]; /* LED mux data */
-extern uint8_t djx16_led_masters[DJX16_N_MASTER_GROUPS*DJX16_N_MASTER_INTENS];
-
 extern void djx16_led_init(void);
-
-#if 0
-extern void djx16_led_update(void);
-#endif
 
 extern void djx16_led_7seg(char index, char value);
 extern void djx16_led_7seg_hex(char index, char nibble);

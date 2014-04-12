@@ -16,7 +16,12 @@
 uint8_t djx16_led_buf[DJX16_LED_LENGTH];
 uint8_t djx16_led_masters[DJX16_N_MASTER_GROUPS*DJX16_N_MASTER_INTENS];
 static uint32_t tick_ctr;
-uint8_t djx16_hw_adc[16];
+uint8_t djx16_hw_adc[DJX16_ADC_LENGTH];
+
+uint8_t djx16_key_row;
+uint8_t djx16_key_pressed;
+uint8_t djx16_key_flash1_8;
+uint8_t djx16_key_flash9_16;
 
 /*
  * this macro latches value "val" into the HC573 buffer with its
@@ -94,9 +99,15 @@ skip_mux_leds:
 	PORTA = 0x00;       /* disable pullups on porta */
 	DDRA  = 0xff;       /* output again */
 
-	if (v != 0xff) {
-		djx16_key_row     = count;
-		djx16_key_pressed = ~v;
+	if (count == DJX16_KEY_ROW_FLASH1_8) {
+		djx16_key_flash1_8 = ~v;
+	} else if (count == DJX16_KEY_ROW_FLASH9_16) {
+		djx16_key_flash9_16 = ~v;
+	} else {
+		if (v != 0xff) {
+			djx16_key_row     = count;
+			djx16_key_pressed = ~v;
+		}
 	}
 
 skip_keys:
@@ -127,7 +138,8 @@ skip_keys:
 		READIN(v, PORTB, 4);
 		DDRA = 0xff; /* all output again */
 
-		djx16_hw_adc[adc_chan] = v;
+		if (adc_chan <= DJX16_ADC_LENGTH)
+			djx16_hw_adc[adc_chan] = v;
 	} 
 
 	DDRA = 0x00;
