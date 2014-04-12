@@ -4,7 +4,7 @@ DEVICE_CC = atmega162
 DEVICE_DUDE = m162
 PROGRAMMER_DUDE = -Pusb -c dragon_isp
 
-F_CPU=24000000
+F_CPU=8000000  # internal calibrated R/C oscillator
 
 CROSS?=avr-
 AVRDUDE=avrdude
