@@ -17,10 +17,11 @@ get_bit_num(uint8_t v)
 	return -1;
 }
 
-#if 0
 uint8_t
 djx16_key_get_raw(int enable_chan_keys)
 {
+	return djx16_hw_key;
+#if 0
 	uint8_t row;
 	int8_t  col;
 	uint8_t keycode;
@@ -50,7 +51,10 @@ djx16_key_get_raw(int enable_chan_keys)
 
 	keycode = (row & 0x07) << 3 | col;
 	return keycode;
+#endif
 }
+
+#if 0
 
 static uint8_t djx16_key_debounce_ctr
 static uint8_t djx16_key_debounce_keycode;

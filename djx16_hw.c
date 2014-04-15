@@ -17,7 +17,9 @@ uint8_t djx16_hw_led_buf[DJX16_LED_LENGTH];
 uint8_t djx16_hw_led_masters[DJX16_N_MASTER_GROUPS*DJX16_N_MASTER_INTENS];
 static uint32_t djx16_hw_tick_ctr;
 uint8_t djx16_hw_adc[DJX16_ADC_LENGTH];
-uint8_t djx16_hw_keys[DJX16_KEY_ROW_NROWS];
+
+uint8_t djx16_hw_key;
+uint8_t djx16_hw_key_ctr;
 
 /*
  * this macro latches value "val" into the HC573 buffer with its
@@ -26,7 +28,7 @@ uint8_t djx16_hw_keys[DJX16_KEY_ROW_NROWS];
 #define LATCH(val, port, bit) do {                     \
 		PORTA = (val);                         \
 		(port) |= _BV(bit);                    \
-		asm volatile ("nop;\n\tnop;\n\tnop;"); \
+		asm volatile ("nop;");                 \
 		(port) &= ~_BV(bit);                   \
         } while(0)
 
@@ -34,9 +36,13 @@ uint8_t djx16_hw_keys[DJX16_KEY_ROW_NROWS];
  * this macro reads in data from the HC573 buffers used for input,
  * the \OE pin connected to PORT/bit will be pulled low. Also
  * used for the ADC with PORT/bit connected to the \RD pin.
+ *
+ * (the weak pullups don't work with 2 nops, need at least
+ *  3 or 4 for the signal to stabilize)
  */
 #define READIN(val, port, bit) do {                    \
 		(port) &= ~_BV(bit);                   \
+		asm volatile ("nop;\n\tnop;");         \
 		asm volatile ("nop;\n\tnop;");         \
 		val = PINA;                            \
 		(port) |= _BV(bit);                    \
@@ -55,6 +61,7 @@ SIGNAL(TIMER0_OVF_vect){ /* timer/counter 0 overflow */
 	uint8_t v;
 	uint8_t offset;
 	uint8_t adc_chan;
+	uint8_t key_col, last_key_row, keycode;
 
 	djx16_hw_tick_ctr++;                      /* global tick counter */
 	count  =  djx16_hw_tick_ctr       & 0x07; /* 3 lowest bits */
@@ -94,16 +101,35 @@ skip_master_leds:
 	if (count >= DJX16_KEY_ROW_NROWS)
 		goto skip_keys;
 
-	DJX16_LATCH_KEY_MTX(~bit);	/* leave "current" row at low */
-
-	/* read in key matrix */
+	/* read in key matrix, first set row-bit low, then read mtx */
+	DJX16_LATCH_KEY_MTX(~bit);	/* pull "current" row low */
 	DDRA  = 0x00;			/* port A all inputs */
-	PORTA = 0xff;			/* weak pullup */
+	PORTA = 0xff;			/* port A weak pullup */
 	READIN(v, PORTB, 2);		/* PB2 = key mtx driver output enable */
-	PORTA = 0x00;			/* disable pullups on porta */
-	DDRA  = 0xff;			/* output again */
+	PORTA = 0x00;			/* port A disable pullups */
+	DDRA  = 0xff;			/* port A output again */
 
-	djx16_hw_keys[count] = ~v;
+	last_key_row = DJX16_KEY_ROW(djx16_hw_key);
+
+	if (djx16_hw_key != DJX16_KEY_NONE){	/* currently key pressed */
+		if (last_key_row != count)	/* don't even bother other rows */
+			goto skip_keys;
+	}
+
+	key_col = 0;			/* start column 0 */
+	while (v) {			/* unpressed keys are 1 bits */
+		if (!(v&0x01))		/* LSB is unset? -> key pressed */
+			break;
+		key_col += (1<<DJX16_KEY_COL_SHIFT);
+		v >>= 1;
+	}
+
+	if (key_col == (8 << DJX16_KEY_COL_SHIFT))
+		keycode = DJX16_KEY_NONE;
+	else
+		keycode = key_col | count ;
+
+	djx16_hw_key = keycode;
 
 skip_keys:
 	/* ===== ADC ===================================================== */

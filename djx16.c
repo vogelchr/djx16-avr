@@ -43,7 +43,7 @@ main(void)
 
 
 	while(1){
-		uint8_t adc;
+		uint8_t adc,key;
 		i=0;
 		do { } while(++i);
 
@@ -54,6 +54,11 @@ main(void)
 
 		djx16_led_7seg_hex(2, adc >> 4);
 		djx16_led_7seg_hex(3, adc & 0x0f);
+
+
+		key = djx16_key_get_raw();
+		djx16_led_7seg_hex(0, key >> 4);
+		djx16_led_7seg_hex(1, key & 0x0f);
 #if 0
 		cli();
 		if (djx16_hw_key_sense) {
