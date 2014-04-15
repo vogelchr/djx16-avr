@@ -8,7 +8,7 @@
 #include <avr/interrupt.h>
 
 /* get a tick-counter that is increased with about 500 Hz */
-extern uint32_t djx16_hw_tick_ctr(void);
+extern uint32_t djx16_hw_get_tick_ctr(void);
 
 /* multiplexed LEDs data */
 extern uint8_t djx16_hw_led_buf[DJX16_LED_LENGTH];

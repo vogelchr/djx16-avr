@@ -17,11 +17,7 @@ uint8_t djx16_hw_led_buf[DJX16_LED_LENGTH];
 uint8_t djx16_hw_led_masters[DJX16_N_MASTER_GROUPS*DJX16_N_MASTER_INTENS];
 static uint32_t djx16_hw_tick_ctr;
 uint8_t djx16_hw_adc[DJX16_ADC_LENGTH];
-
-uint8_t djx16_hw_key_row;
-uint8_t djx16_hw_key_sense;
-uint8_t djx16_key_flash1_8;
-uint8_t djx16_key_flash9_16;
+uint8_t djx16_hw_keys[DJX16_KEY_ROW_NROWS];
 
 /*
  * this macro latches value "val" into the HC573 buffer with its
@@ -73,21 +69,24 @@ SIGNAL(TIMER0_OVF_vect){ /* timer/counter 0 overflow */
 
 skip_mux_leds:
 	/* ===== MASTER LEDS ============================================= */
-	if (count == 0)
-		offset = 0;
-	else if (count < 3)
-		offset = 2;
+	if (count == 0)	/* *-------    active period, weight = 1 */
+		offset = 0;	/* 01234567 <- count                     */
+	else if (count == 1)	/* -**-----                   weight = 2 */
+		offset = 2;	/*                                       */
+	else if (count == 3)	/* ---*****                   weight = 5 */ 
+		offset = 4;	/*                                       */
 	else
-		offset = 4;
+		goto skip_master_leds;
 
-	v = djx16_hw_led_masters[offset];
+	v = djx16_hw_led_masters[offset];	/* channel 1..8 LEDs */
 	DJX16_LATCH_CHAN_LED(v);
 
-	v = djx16_hw_led_masters[offset+1]; /* DJX16_MASTER_LED */
+	v = djx16_hw_led_masters[offset+1];	/* master M,A,B LEDs */
 	DJX16_LATCH_MASTER_LED(v);
 
+skip_master_leds:
 	/* ===== KEYS ==================================================== */
-	if (bit & 0xe0)
+	if (count >= DJX16_KEY_ROW_NROWS)
 		goto skip_keys;
 
 	DJX16_LATCH_KEY_MTX(~bit); /* latch  -> DJX16_KEY_MTX */
@@ -99,20 +98,15 @@ skip_mux_leds:
 	PORTA = 0x00;       /* disable pullups on porta */
 	DDRA  = 0xff;       /* output again */
 
-	if (count == DJX16_KEY_ROW_FLASH1_8) {
-		djx16_key_flash1_8 = ~v;
-	} else if (count == DJX16_KEY_ROW_FLASH9_16) {
-		djx16_key_flash9_16 = ~v;
-	} else {
-		if (v != 0xff) {
-			djx16_hw_key_row     = count;
-			djx16_hw_key_sense = ~v;
-		}
-	}
+	djx16_hw_keys[count] = ~v;
 
 skip_keys:
 	/* ===== ADC ===================================================== */
 	adc_chan = c_high & 0x0f;
+
+	if (adc_chan >= DJX16_ADC_LENGTH)
+		goto skip_adc;
+	
 	/* on cycle 0, set mux, let analog system settle,
            on cycle 6, trigger conversion
            on cycle 7, read back
@@ -138,15 +132,14 @@ skip_keys:
 		READIN(v, PORTB, 4);
 		DDRA = 0xff; /* all output again */
 
-		if (adc_chan <= DJX16_ADC_LENGTH)
-			djx16_hw_adc[adc_chan] = v;
+		djx16_hw_adc[adc_chan] = v;
 	} 
-
+skip_adc:
 	DDRA = 0x00;
 	PORTA = 0x00;
 }
 
-extern uint32_t djx16_hw_tick_ctr(void){
+extern uint32_t djx16_hw_get_tick_ctr(void){
 	uint32_t v;
 	cli();
 	v = djx16_hw_tick_ctr;
