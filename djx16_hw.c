@@ -21,7 +21,7 @@ uint8_t djx16_hw_keys[DJX16_KEY_ROW_NROWS];
 
 /*
  * this macro latches value "val" into the HC573 buffer with its
- * LE pin connected to PORT/bit
+ * LE pin connected to PORT/bit being pulled high
  */
 #define LATCH(val, port, bit) do {                     \
 		PORTA = (val);                         \
@@ -30,6 +30,11 @@ uint8_t djx16_hw_keys[DJX16_KEY_ROW_NROWS];
 		(port) &= ~_BV(bit);                   \
         } while(0)
 
+/*
+ * this macro reads in data from the HC573 buffers used for input,
+ * the \OE pin connected to PORT/bit will be pulled low. Also
+ * used for the ADC with PORT/bit connected to the \RD pin.
+ */
 #define READIN(val, port, bit) do {                    \
 		(port) &= ~_BV(bit);                   \
 		asm volatile ("nop;\n\tnop;");         \
@@ -69,11 +74,11 @@ SIGNAL(TIMER0_OVF_vect){ /* timer/counter 0 overflow */
 
 skip_mux_leds:
 	/* ===== MASTER LEDS ============================================= */
-	if (count == 0)	/* *-------    active period, weight = 1 */
+	if (count == 0)		/* *-------    active period, weight = 1 */
 		offset = 0;	/* 01234567 <- count                     */
 	else if (count == 1)	/* -**-----                   weight = 2 */
 		offset = 2;	/*                                       */
-	else if (count == 3)	/* ---*****                   weight = 5 */ 
+	else if (count == 3)	/* ---*****                   weight = 5 */
 		offset = 4;	/*                                       */
 	else
 		goto skip_master_leds;
@@ -89,14 +94,14 @@ skip_master_leds:
 	if (count >= DJX16_KEY_ROW_NROWS)
 		goto skip_keys;
 
-	DJX16_LATCH_KEY_MTX(~bit); /* latch  -> DJX16_KEY_MTX */
+	DJX16_LATCH_KEY_MTX(~bit);	/* leave "current" row at low */
 
 	/* read in key matrix */
-	DDRA  = 0x00;       /* port A all inputs */
-	PORTA = 0xff;       /* weak pullup */
-	READIN(v, PORTB, 2); /* PB2 = key matrix driver output enable */
-	PORTA = 0x00;       /* disable pullups on porta */
-	DDRA  = 0xff;       /* output again */
+	DDRA  = 0x00;			/* port A all inputs */
+	PORTA = 0xff;			/* weak pullup */
+	READIN(v, PORTB, 2);		/* PB2 = key mtx driver output enable */
+	PORTA = 0x00;			/* disable pullups on porta */
+	DDRA  = 0xff;			/* output again */
 
 	djx16_hw_keys[count] = ~v;
 
