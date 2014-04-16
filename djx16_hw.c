@@ -41,11 +41,13 @@ uint8_t djx16_hw_key_ctr;
  *  3 or 4 for the signal to stabilize)
  */
 #define READIN(val, port, bit) do {                    \
+		DDRA = 0x00;                           \
 		(port) &= ~_BV(bit);                   \
 		asm volatile ("nop;\n\tnop;");         \
 		asm volatile ("nop;\n\tnop;");         \
 		val = PINA;                            \
 		(port) |= _BV(bit);                    \
+		DDRA = 0xff;                           \
         } while(0)
 
 #define DJX16_LATCH_CHAN_LED(v)		LATCH(v, PORTD, 5)
@@ -56,21 +58,18 @@ uint8_t djx16_hw_key_ctr;
 #define DJX16_LATCH_7SEG_COL(v)		LATCH(v, PORTD, 3)
 
 SIGNAL(TIMER0_OVF_vect){ /* timer/counter 0 overflow */
-	uint8_t count, c_high;  /* 3 LSB and 5 not-so-LSB of tick counter */
-	uint8_t bit;            /* 1 << count */
-	uint8_t v;
-	uint8_t offset;
-	uint8_t adc_chan;
+	uint8_t count, bit, v, adc_chan;
+	char offset;
 	uint8_t key_col, last_key_row, keycode;
 
 	djx16_hw_tick_ctr++;                      /* global tick counter */
 	count  =  djx16_hw_tick_ctr       & 0x07; /* 3 lowest bits */
-	c_high = (djx16_hw_tick_ctr >> 3) & 0x1f; /* 5 next bits */
+	adc_chan = (djx16_hw_tick_ctr >> 1) & 0x0f;
 	bit   = 1 << count;              /* used at various places below.. */
 
 	DDRA  = 0xff;          /* make sure we can write out... */
-	/* ===== MULTIPLEXED LEDS ======================================== */
 
+	/* ===== MULTIPLEXED LEDS ======================================== */
 	if (count >= DJX16_LED_LENGTH)
 		goto skip_mux_leds;
 
@@ -101,17 +100,27 @@ skip_master_leds:
 	if (count >= DJX16_KEY_ROW_NROWS)
 		goto skip_keys;
 
-	/* read in key matrix, first set row-bit low, then read mtx */
+	/* we keep the matrix drivers in "output high" state if not in use,
+	 * to be able to read out the keyboard, we have to put it into
+	 * highZ (\OE = high) to be able to sucessfully put the bit pattern
+	 * into the latch without having a pressed key feed back to the
+	 * data lines!
+	 */
+
+	PORTB |= _BV(2);		/* matrix driver from output high -> high Z */
 	DJX16_LATCH_KEY_MTX(~bit);	/* pull "current" row low */
-	DDRA  = 0x00;			/* port A all inputs */
+
 	PORTA = 0xff;			/* port A weak pullup */
 	READIN(v, PORTB, 2);		/* PB2 = key mtx driver output enable */
 	PORTA = 0x00;			/* port A disable pullups */
-	DDRA  = 0xff;			/* port A output again */
+
+	/* now put again the "output high" state in the matrix register */
+	DJX16_LATCH_KEY_MTX(0xff);	/* matrix to idle */
+	PORTB &= ~_BV(2);		/* \OE -> low */
 
 	last_key_row = DJX16_KEY_ROW(djx16_hw_key);
 
-	if (djx16_hw_key != DJX16_KEY_NONE){	/* currently key pressed */
+	if (djx16_hw_key != DJX16_KEY_NONE) {	/* currently key pressed */
 		if (last_key_row != count)	/* don't even bother other rows */
 			goto skip_keys;
 	}
@@ -124,7 +133,7 @@ skip_master_leds:
 		v >>= 1;
 	}
 
-	if (key_col == 8)
+	if (key_col == 8)		/* no key was pressed */
 		keycode = DJX16_KEY_NONE;
 	else
 		keycode = DJX16_KEYCODE(count, key_col);
@@ -133,40 +142,42 @@ skip_master_leds:
 
 skip_keys:
 	/* ===== ADC ===================================================== */
-	adc_chan = c_high & 0x0f;
+
+	/* that's a little ugly, we borrow two bits from c_high, two bits
+	 * from the counter, and have two phases. First, we get the
+	 * last converted result, then we setup the mux, after the mux
+	 * was allowed to settle for one period, we trigger the ADC
+	 * via the \WR pin. */
 
 	if (adc_chan >= DJX16_ADC_LENGTH)
 		goto skip_adc;
-	
-	/* on cycle 0, set mux, let analog system settle,
-           on cycle 6, trigger conversion
-           on cycle 7, read back
-         */
-	if ( (count == 0) || (count == 6) ) {
-		v = ((adc_chan & 0x01) << 5) |	/* bit0 -> D5 */
-		    ((adc_chan & 0x02) << 3) |	/* bit1 -> D4 */
-		    ((adc_chan & 0x04) << 1) |	/* bit2 -> D3 */
-		    0x07;  /* D0 = \WR, D1 = \E(masters), D2 = \E(chans) */
 
-		if (adc_chan & 0x08) {
-			v &= ~_BV(1);  /* E on master mux */
-		} else {
-			v &= ~_BV(2);  /* E on channel mux */
-		}
-
-		if (count == 0)
-			v &= ~_BV(0); /* \WR = 0 in cycle 0, 1 in cycle 6 */
-		DJX16_LATCH_ADC_MUX(v);
+	if (!(count & 0x01)) {				/* read chan */
+		READIN(v, PORTB, 4);
+		djx16_hw_adc[adc_chan] = v;
 	}
 
-	if ( count == 7 ) {
-		/* read last conversion */
-		DDRA = 0x00; /* all input */
-		READIN(v, PORTB, 4);
-		DDRA = 0xff; /* all output again */
+	adc_chan++;					/* prepare next ch */
+	if (adc_chan >= DJX16_ADC_LENGTH)		/* wrap to zero */
+		adc_chan = 0;
 
-		djx16_hw_adc[adc_chan] = v;
-	} 
+	v = ((adc_chan & 0x01) << 5) |			/* bit0 -> D5 */
+	    ((adc_chan & 0x02) << 3) |			/* bit1 -> D4 */
+	    ((adc_chan & 0x04) << 1) |			/* bit2 -> D3 */
+	    0x07;  /* D0 = \WR, D1 = \E(masters), D2 = \E(chans) */
+
+	if (adc_chan & 0x08)				/* 0..7=ch 8..x=mst */
+		v &= ~_BV(1);				/* \E on master mux */
+	else
+		v &= ~_BV(2);				/* \E on chan mux */
+
+	DJX16_LATCH_ADC_MUX(v);				/* \WR = 1 */
+
+	if (count & 0x01) {				/* 2nd phase */
+		DJX16_LATCH_ADC_MUX(v & ~_BV(0));	/* \WR = 0 */
+		DJX16_LATCH_ADC_MUX(v);			/* \WR = 1 */
+	}
+
 skip_adc:
 	DDRA = 0x00;
 	PORTA = 0x00;
