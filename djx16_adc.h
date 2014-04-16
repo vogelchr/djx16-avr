@@ -13,6 +13,8 @@ enum DJX16_ADC_POS {
 	DJX16_ADC_CH6,
 	DJX16_ADC_CH7,
 	DJX16_ADC_MASTER,
+	DJX16_ADC_LEVEL,	/* inverted! */
+	DJX16_ADC_SPEED,	/* inverted! */
 	DJX16_ADC_LENGTH
 };
 

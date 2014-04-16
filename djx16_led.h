@@ -33,4 +33,6 @@ extern void djx16_led_7seg_hex(char index, char nibble);
 
 extern void djx16_led_indic(char index, enum ON_OFF_TOGGLE onofftoggle);
 
+extern void djx16_led_master(char index, uint8_t value);
+
 #endif

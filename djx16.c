@@ -10,6 +10,9 @@ main(void)
 {
 	uint16_t i;
 	uint8_t v,c;
+	uint8_t adc,key,ch,sel;
+
+	ch = 0;
 
 	DDRA  = 0x00;
 	PORTA = 0xff; /* pullup */
@@ -36,29 +39,39 @@ main(void)
 	djx16_led_init();
 	sei(); /* enable interrupts */
 
-	djx16_led_7seg_hex(0, c);
-	djx16_led_7seg(1, 0);
-	djx16_led_7seg_hex(2, v >> 4);
-	djx16_led_7seg_hex(3, v & 0x0f);
-
-
 	while(1){
-		uint8_t adc,key;
 		i=0;
 		do { } while(++i);
 
 		if ((++c) > 7)
 			c = 0;
 
-		adc = djx16_adc_get(DJX16_ADC_CH0);
+		adc = djx16_adc_get(ch);
 
 		djx16_led_7seg_hex(2, adc >> 4);
 		djx16_led_7seg_hex(3, adc & 0x0f);
 
+		for (i=0; i<DJX16_ADC_LENGTH; i++) {
+			adc = djx16_adc_get(i);
+			djx16_led_master(i, adc);
+		}
 
-		key = djx16_key_get_raw();
-		djx16_led_7seg_hex(0, key >> 4);
-		djx16_led_7seg_hex(1, key & 0x0f);
+
+		key = djx16_key_get();
+
+		if (key != DJX16_KEY_NONE) {
+			sel = (DJX16_KEY_ROW(key) << 3) + DJX16_KEY_COL(key);
+
+			if (sel <= DJX16_ADC_LENGTH) {
+				ch = sel;
+				djx16_led_7seg_hex(0, sel );
+				djx16_led_7seg(1, 0);
+			} else {
+				djx16_led_7seg_hex(0, key >> 4);
+				djx16_led_7seg_hex(1, key & 0x0f);
+			}
+		}
+
 #if 0
 		cli();
 		if (djx16_hw_key_sense) {

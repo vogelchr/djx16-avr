@@ -110,3 +110,48 @@ djx16_led_indicator(char index, enum ON_OFF_TOGGLE onofftoggle)
 		break;
 	}
 }
+
+/* the LED-masters array is organized as a sequence of groups of LEDs and
+ * intensities, for 3 intensities and 2 LEDs, it's the following
+ * organization:
+ *
+ * led_masters[] = { Group0_Intensits1, G1_I1, G0_I2, G1_I2, G0_I4, G1_I4 }
+ *
+ * The data for LED "i" is stored in group i/8, bit 1<<i.
+ *
+ * LEDs whose bit is 0 are turned on. Intensity slot I2 is displayed twice
+ * as long as intensity slot I1, I4 4 (in reality: 5) times as long as I2.
+ */
+
+void
+djx16_led_master(char index, uint8_t value)
+{
+	uint8_t *p, bit;
+	char i;
+
+	p = djx16_hw_led_masters;
+
+	for (i=0; i<DJX16_N_MASTER_GROUPS; i++) { /* find group for index */
+		if (index < 8)
+			break;
+		index -= 8;
+		p++;				/* to to next group in arr */
+	}
+
+	if (index > 8)				/* index out of range */
+		return;
+
+	bit = 1 << index;			/* get bit for this LED */
+
+	value >>= (8-DJX16_N_MASTER_INTENS);	/* align "N" intensity bit to LSB */
+
+	for (i=0; i<DJX16_N_MASTER_INTENS; i++) {
+		if (value & 0x01)
+			*p &= ~bit;
+		else
+			*p |= bit;
+		value >>= 1;
+		p += DJX16_N_MASTER_GROUPS;
+	}
+
+}

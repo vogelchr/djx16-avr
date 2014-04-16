@@ -18,7 +18,7 @@ get_bit_num(uint8_t v)
 }
 
 uint8_t
-djx16_key_get_raw(int enable_chan_keys)
+djx16_key_get()
 {
 	return djx16_hw_key;
 #if 0

@@ -120,14 +120,14 @@ skip_master_leds:
 	while (v) {			/* unpressed keys are 1 bits */
 		if (!(v&0x01))		/* LSB is unset? -> key pressed */
 			break;
-		key_col += (1<<DJX16_KEY_COL_SHIFT);
+		key_col += 1;
 		v >>= 1;
 	}
 
-	if (key_col == (8 << DJX16_KEY_COL_SHIFT))
+	if (key_col == 8)
 		keycode = DJX16_KEY_NONE;
 	else
-		keycode = key_col | count ;
+		keycode = DJX16_KEYCODE(count, key_col);
 
 	djx16_hw_key = keycode;
 
@@ -143,9 +143,11 @@ skip_keys:
            on cycle 7, read back
          */
 	if ( (count == 0) || (count == 6) ) {
-		v = ((adc_chan & 0x07) << 3) | _BV(1) | _BV(2) | _BV(0);
-			/* analog mux input select S1..S3 = Q3..Q5,
-			 * turn on both \E bits, clear on demand below */
+		v = ((adc_chan & 0x01) << 5) |	/* bit0 -> D5 */
+		    ((adc_chan & 0x02) << 3) |	/* bit1 -> D4 */
+		    ((adc_chan & 0x04) << 1) |	/* bit2 -> D3 */
+		    0x07;  /* D0 = \WR, D1 = \E(masters), D2 = \E(chans) */
+
 		if (adc_chan & 0x08) {
 			v &= ~_BV(1);  /* E on master mux */
 		} else {
