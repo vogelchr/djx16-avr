@@ -84,17 +84,18 @@ djx16_led_indicator(char index, enum ON_OFF_TOGGLE onofftoggle)
 	enum DJX16_LED_POS pos = DJX16_LED_INDIC_A;
 	unsigned char bit;
 
-	if (index > 23)
+	if (index >= DJX16_LED_NUM_INDICATORS)
 		return;
 
-	if (index > 15) {
-		index -= 16;
-		pos = DJX16_LED_INDIC_C;
-	} else if (index > 7) {
-		index -= 8;
+	if (index < 8) {
+		pos = DJX16_LED_INDIC_A;
+	} else if (index < 16) {
 		pos = DJX16_LED_INDIC_B;
+		index -= 8;
+	} else {
+		pos = DJX16_LED_INDIC_C;
+		index -= 16;
 	}
-
 
 	bit = (1<<index);
 

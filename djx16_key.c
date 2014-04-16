@@ -20,38 +20,15 @@ get_bit_num(uint8_t v)
 uint8_t
 djx16_key_get()
 {
-	return djx16_hw_key;
-#if 0
-	uint8_t row;
-	int8_t  col;
-	uint8_t keycode;
-
+	uint8_t ret = DJX16_KEY_NONE;
 	cli();
-	row = djx16_hw_key_row;
-	col = (int8_t)djx16_hw_key_sense;
-	djx16_hw_key_row = 0;
-	djx16_hw_key_sense = 0;
+	if (djx16_hw_key     != DJX16_KEY_NONE &&
+	    djx16_hw_key_ctr == DJX16_KEY_DEBOUNCE) {
+		djx16_hw_key_ctr++; /* make sure we only return once */
+		ret = djx16_hw_key;
+	}
 	sei();
-
-	/* bit pattern to "bit number set", or -1 of no valid single-bit */
-	col = get_bit_num((uint8_t)col);
-
-	if (col == -1 && enable_chan_keys){
-		row = DJX16_KEY_ROW_FLASH1_8;
-		col = get_bit_num(djx16_key_flash1_8);
-	}
-
-	if (col == -1 && enable_chan_keys) {
-		row = DJX16_KEY_ROW_FLASH9_16;
-		col = get_bit_num(djx16_key_flash9_16);
-	}
-
-	if (col == -1)
-		return DJX16_KEY_NONE; /* no key pressed */
-
-	keycode = (row & 0x07) << 3 | col;
-	return keycode;
-#endif
+	return ret;
 }
 
 #if 0

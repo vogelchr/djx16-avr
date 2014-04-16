@@ -41,6 +41,7 @@ uint8_t djx16_hw_key_ctr;
  *  3 or 4 for the signal to stabilize)
  */
 #define READIN(val, port, bit) do {                    \
+		PORTA = 0xff;                          \
 		DDRA = 0x00;                           \
 		(port) &= ~_BV(bit);                   \
 		asm volatile ("nop;\n\tnop;");         \
@@ -48,6 +49,7 @@ uint8_t djx16_hw_key_ctr;
 		val = PINA;                            \
 		(port) |= _BV(bit);                    \
 		DDRA = 0xff;                           \
+		PORTA = 0x00;                          \
         } while(0)
 
 #define DJX16_LATCH_CHAN_LED(v)		LATCH(v, PORTD, 5)
@@ -60,7 +62,7 @@ uint8_t djx16_hw_key_ctr;
 SIGNAL(TIMER0_OVF_vect){ /* timer/counter 0 overflow */
 	uint8_t count, bit, v, adc_chan;
 	char offset;
-	uint8_t key_col, last_key_row, keycode;
+	uint8_t key_col, last_key_row, last_key_col, keycode;
 
 	djx16_hw_tick_ctr++;                      /* global tick counter */
 	count  =  djx16_hw_tick_ctr       & 0x07; /* 3 lowest bits */
@@ -110,15 +112,14 @@ skip_master_leds:
 	PORTB |= _BV(2);		/* matrix driver from output high -> high Z */
 	DJX16_LATCH_KEY_MTX(~bit);	/* pull "current" row low */
 
-	PORTA = 0xff;			/* port A weak pullup */
 	READIN(v, PORTB, 2);		/* PB2 = key mtx driver output enable */
-	PORTA = 0x00;			/* port A disable pullups */
 
 	/* now put again the "output high" state in the matrix register */
 	DJX16_LATCH_KEY_MTX(0xff);	/* matrix to idle */
 	PORTB &= ~_BV(2);		/* \OE -> low */
 
 	last_key_row = DJX16_KEY_ROW(djx16_hw_key);
+	last_key_col = DJX16_KEY_COL(djx16_hw_key);
 
 	if (djx16_hw_key != DJX16_KEY_NONE) {	/* currently key pressed */
 		if (last_key_row != count)	/* don't even bother other rows */
@@ -138,7 +139,13 @@ skip_master_leds:
 	else
 		keycode = DJX16_KEYCODE(count, key_col);
 
-	djx16_hw_key = keycode;
+	if (keycode == djx16_hw_key) {
+		if (djx16_hw_key_ctr < DJX16_KEY_DEBOUNCE)
+			djx16_hw_key_ctr++;
+	} else {
+		djx16_hw_key_ctr = 0;
+		djx16_hw_key = keycode;
+	}
 
 skip_keys:
 	/* ===== ADC ===================================================== */

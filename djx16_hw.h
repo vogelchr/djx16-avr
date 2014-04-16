@@ -21,5 +21,6 @@ extern uint8_t djx16_hw_adc[DJX16_ADC_LENGTH];
 
 /* currently pressed keycode */
 extern uint8_t djx16_hw_key;
+extern uint8_t djx16_hw_key_ctr;
 
 #endif
