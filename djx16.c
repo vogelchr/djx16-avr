@@ -39,7 +39,7 @@ main(void)
 	djx16_led_init();
 	sei(); /* enable interrupts */
 
-	while(1){
+	while (1) {
 		i=0;
 		do { } while(++i);
 
@@ -62,7 +62,7 @@ main(void)
 		if (key != DJX16_KEY_NONE) {
 			sel = (DJX16_KEY_ROW(key) << 3) + DJX16_KEY_COL(key);
 
-			if (sel <= DJX16_ADC_LENGTH) {
+			if (sel < DJX16_ADC_LENGTH) {
 				ch = sel;
 				djx16_led_7seg_hex(0, sel );
 				djx16_led_7seg(1, 0);
@@ -71,16 +71,5 @@ main(void)
 				djx16_led_7seg_hex(1, key & 0x0f);
 			}
 		}
-
-#if 0
-		cli();
-		if (djx16_hw_key_sense) {
-			djx16_led_7seg_hex(0, djx16_hw_key_row);
-			djx16_led_7seg_hex(2, djx16_hw_key_sense >> 4);
-			djx16_led_7seg_hex(3, djx16_hw_key_sense & 0x0f);
-			djx16_hw_key_sense = djx16_hw_key_row = 0;
-		}
-		sei();
-#endif
 	}
 }
