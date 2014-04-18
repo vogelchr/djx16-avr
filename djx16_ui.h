@@ -3,5 +3,12 @@
 
 #include <avr/io.h>
 
+enum djx16_ui_state {
+	DJX16_UI_MANUAL,
+	DJX16_UI_SCENE,
+	DJX16_UI_SCENE_EDIT
+};
+
+extern void djx16_ui_init(void);
 
 #endif

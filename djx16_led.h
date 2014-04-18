@@ -66,7 +66,9 @@ extern void djx16_led_7seg_hex(char index, char nibble);
 /* set LED indicator "index" either to ON, OFF or toggle it.
  * index is 0.. DJX16_LED_NUM_INDICATORS-1
  */
-extern void djx16_led_indicator(char index, enum ON_OFF_TOGGLE onofftoggle);
+extern void djx16_led_indicator(enum DJX16_LED_INDICATORS index,
+		enum ON_OFF_TOGGLE onofftoggle);
+extern char djx16_led_indicator_get(enum DJX16_LED_INDICATORS index);
 
 extern void djx16_led_master(char index, uint8_t value);
 

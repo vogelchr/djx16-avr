@@ -69,14 +69,13 @@ djx16_led_7seg_hex(char index, char nibble)
 	djx16_led_7seg(index, pgm_read_byte(font_7seg + nibble));
 }
 
-void
-djx16_led_indicator(char index, enum ON_OFF_TOGGLE onofftoggle)
+static enum DJX16_LED_POS
+djx16_led_indicator_find(enum DJX16_LED_INDICATORS index, uint8_t *bit)
 {
 	enum DJX16_LED_POS pos = DJX16_LED_INDIC_A;
-	unsigned char bit;
 
 	if (index >= DJX16_LED_NUM_INDICATORS)
-		return;
+		return DJX16_LED_NUM_INDICATORS; /* not valid */
 
 	if (index < 8) {
 		pos = DJX16_LED_INDIC_A;
@@ -88,7 +87,20 @@ djx16_led_indicator(char index, enum ON_OFF_TOGGLE onofftoggle)
 		index -= 16;
 	}
 
-	bit = (1<<index);
+	*bit = (1<<index);
+	return pos;
+}
+
+
+void
+djx16_led_indicator(enum DJX16_LED_INDICATORS index, enum ON_OFF_TOGGLE onofftoggle)
+{
+	enum DJX16_LED_POS pos;
+	unsigned char bit=0;
+
+	pos = djx16_led_indicator_find(index, &bit);
+	if (pos == DJX16_LED_NUM_INDICATORS)
+		return;
 
 	switch (onofftoggle) {
 	case LED_OFF:
@@ -101,6 +113,19 @@ djx16_led_indicator(char index, enum ON_OFF_TOGGLE onofftoggle)
 		djx16_hw_led_buf[pos] ^= bit;
 		break;
 	}
+}
+
+char
+djx16_led_indicator_get(enum DJX16_LED_INDICATORS index)
+{
+	enum DJX16_LED_POS pos;
+	uint8_t bit;
+
+	pos = djx16_led_indicator_find(index, &bit);
+	if (pos == DJX16_LED_NUM_INDICATORS)
+		return 0;
+
+	return !!(djx16_hw_led_buf[pos] & bit);
 }
 
 /* the LED-masters array is organized as a sequence of groups of LEDs and
