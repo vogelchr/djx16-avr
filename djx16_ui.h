@@ -10,5 +10,6 @@ enum djx16_ui_state {
 };
 
 extern void djx16_ui_init(void);
+extern void djx16_ui_run(void);
 
 #endif
