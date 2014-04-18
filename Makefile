@@ -16,7 +16,7 @@ SIZE=$(CROSS)size
 
 LDFLAGS=-Wall -g -mmcu=$(DEVICE_CC)
 CPPFLAGS=-I. -I$(VUSB) -DF_CPU=$(F_CPU)
-CFLAGS=-mmcu=$(DEVICE_CC) -Os -Wall -Wextra -g
+CFLAGS=-mmcu=$(DEVICE_CC) -Os -Wall -Wextra -g -fshort-enums
 ASFLAGS=$(CFLAGS)
 
 OBJS = djx16.o djx16_hw.o djx16_led.o djx16_key.o djx16_adc.o \
