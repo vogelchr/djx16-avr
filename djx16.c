@@ -11,11 +11,6 @@
 int
 main(void)
 {
-	uint16_t i;
-	uint8_t c;
-	uint8_t adc,key,ch,sel;
-	uint8_t indicator;
-
 	djx16_hw_init();
 	djx16_led_init();
 	djx16_output_init();

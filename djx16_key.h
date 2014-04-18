@@ -7,8 +7,11 @@
  *       +----+----+----+----+----+----+----+----+
  * (MSB) : D7 : D6 : D5 : D4 : D3 : D2 : D1 : D0 : (LSB)
  *       +----+----+----+----+----+----+----+----+
- *       : 0  : Row(0..4)    : 0  : Column(0..7) :
+ *       : S  : Row(0..4)    : 0  : Column(0..7) :
  *       +----+----+----+----+----+----+----+----+
+ *         ^
+ *         |
+ *         +-- shift pressed before (or'ed with keycode)
  */
 
 #define DJX16_KEY_ROW_SHIFT	4
@@ -75,7 +78,8 @@ enum djx16_key_names {
 	DJX16_KEY_TAP     = DJX16_KEYCODE(4, 5),
 	DJX16_KEY_STANDBY = DJX16_KEYCODE(4, 6),
 
-	DJX16_KEY_NONE    = 0xff
+	DJX16_KEY_NONE    = 0xff,
+	DJX16_KEY_IS_SHIFTED = 0x80
 };
 
 /* used in hardware loop to count periods for how many the

@@ -71,12 +71,13 @@ djx16_ui_run(void)
 	if (keycode == DJX16_KEY_NONE)
 		return;
 
+	/* iterate over key handler list */
 	p = djx16_ui_handler_table;
 	while (1) {
 		handler_key = pgm_read_byte(&(p->keycode));
 		hdlr = (key_handler_ptr_t)pgm_read_word(&(p->handler_fct));
 
-		if (!hdlr)
+		if (!hdlr) /* list ends with NULL handler */
 			break;
 
 		if (handler_key == keycode)
