@@ -48,8 +48,8 @@ uint8_t djx16_hw_key_ctr;
 		asm volatile ("nop;\n\tnop;");         \
 		val = PINA;                            \
 		(port) |= _BV(bit);                    \
-		DDRA = 0xff;                           \
 		PORTA = 0x00;                          \
+		DDRA = 0xff;                           \
         } while(0)
 
 #define DJX16_LATCH_CHAN_LED(v)		LATCH(v, PORTD, 5)
@@ -61,8 +61,8 @@ uint8_t djx16_hw_key_ctr;
 
 SIGNAL(TIMER0_OVF_vect){ /* timer/counter 0 overflow */
 	uint8_t count, bit, v, adc_chan;
-	char offset;
-	uint8_t key_col, last_key_row, last_key_col, keycode;
+	int offset;
+	uint8_t key_col, last_key_row, keycode;
 
 	djx16_hw_tick_ctr++;                      /* global tick counter */
 	count  =  djx16_hw_tick_ctr       & 0x07; /* 3 lowest bits */
@@ -102,14 +102,39 @@ skip_master_leds:
 	if (count >= DJX16_KEY_ROW_NROWS)
 		goto skip_keys;
 
-	/* we keep the matrix drivers in "output high" state if not in use,
-	 * to be able to read out the keyboard, we have to put it into
-	 * highZ (\OE = high) to be able to sucessfully put the bit pattern
-	 * into the latch without having a pressed key feed back to the
-	 * data lines!
+	/* the keyboard matrixx functions like this:
+	 *
+	 *     LE  \OE
+	 *      |  |
+	 *     +----+            Key Matrix
+	 *    /|D  Q|---..       -|-
+	 *  ||/|D  Q|-------|<|--o o--+
+	 *  ||/|D  Q|---..            |
+	 *  || +----+               ::|
+	 *  ||                      |||
+	 *  ++======================+++=========== Data Bus
+	 *
+	 * To sense a key, we put a zero corresponding to the row we want
+	 * to sense into the latch, but keep \OE still high, so the outputs
+	 * don't get pulled low: In case of a pressed switch, this would
+	 * mess up the data bus and feed back into the latch input.
+	 *
+	 * Then we put the data-bus to input, with pullups enabled
+	 * (PORTA=0xff DDRA=0xff) and briefly turn on the latch' output
+	 * (\OE = 0). We sample the data bus, turn off the output and put
+	 * everything back to normal.
+	 *
+	 * When idle, we force the latch to all ones, with the output
+	 * enabled to minimize the risk that the cathode side of a diode
+	 * would drift low over time, and when pressing a button charge
+	 * would be injected onto the databus.
+	 *
+	 * Therefore, we latch 0xff onto the '738 and enable the output
+	 * when not using the matrix:
+	 *	DJX16_LATCH_KEY_MTX(0xff); PORTB &= ~_BV(2);
 	 */
 
-	PORTB |= _BV(2);		/* matrix driver from output high -> high Z */
+	PORTB |= _BV(2);		/* matrix driver H -> Z */
 	DJX16_LATCH_KEY_MTX(~bit);	/* pull "current" row low */
 
 	READIN(v, PORTB, 2);		/* PB2 = key mtx driver output enable */
@@ -119,7 +144,6 @@ skip_master_leds:
 	PORTB &= ~_BV(2);		/* \OE -> low */
 
 	last_key_row = DJX16_KEY_ROW(djx16_hw_key);
-	last_key_col = DJX16_KEY_COL(djx16_hw_key);
 
 	if (djx16_hw_key != DJX16_KEY_NONE) {	/* currently key pressed */
 		if (last_key_row != count)	/* don't even bother other rows */
@@ -190,7 +214,9 @@ skip_adc:
 	PORTA = 0x00;
 }
 
-extern uint32_t djx16_hw_get_tick_ctr(void){
+uint32_t
+djx16_hw_get_tick_ctr(void)
+{
 	uint32_t v;
 	cli();
 	v = djx16_hw_tick_ctr;
@@ -198,4 +224,30 @@ extern uint32_t djx16_hw_get_tick_ctr(void){
 	return v;
 }
 
+void
+djx16_hw_init(void)
+{
+
+	DDRA  = 0x00;
+
+	DDRB  = 0x5f;  /* PB0..4 & 6 */
+	PORTB = 0x14;  /* \RD ADC and \OE KeyMtx high, else low */
+
+	DDRC  = 0x00; /* A8..A15, not used */
+	PORTC = 0xff; /* weak pullup */
+
+	DDRD  = 0x38; /* 7-segment latch enables, channel LEDs */
+	PORTD = 0x00;
+
+	DDRE  = 0x01; /* PB1 = ALE, pull down */
+	PORTE = 0x00;
+
+	/* configure timer/counter0 */
+	/* 8-bit counter, fCLK = 8 MHz, prescale 64 -> 488 Hz Interrupt */
+	TCCR0 = _BV(CS01)|_BV(CS00);
+
+	/* enable timer overflow interrupt */
+	TIMSK |= _BV(TOIE0);
+
+}
 

@@ -9,37 +9,16 @@ int
 main(void)
 {
 	uint16_t i;
-	uint8_t v,c;
+	uint8_t c;
 	uint8_t adc,key,ch,sel;
 	uint8_t indicator;
 
-	ch = 0;
-
-	DDRA  = 0x00;
-	PORTA = 0xff; /* pullup */
-
-	DDRB  = 0x5f;  /* PB0..4 & 6 */
-	PORTB = 0x14;  /* \RD ADC and \OE KeyMtx high, else low */
-
-	DDRC  = 0x00; /* A8..A15, not used */
-	PORTC = 0xff; /* weak pullup */
-
-	DDRD  = 0x38; /* 7-segment latch enables, channel LEDs */
-	PORTD = 0x00;
-
-	DDRE  = 0x01; /* PB1 = ALE, pull down */
-	PORTE = 0x00;
-
-	/* configure timer/counter0 */
-	/* 8-bit counter, fCLK = 8 MHz, prescale 64 -> 488 Hz Interrupt */
-	TCCR0 = _BV(CS01)|_BV(CS00);
-
-	/* enable timer overflow interrupt */
-	TIMSK |= _BV(TOIE0);
-
+	djx16_hw_init();
 	djx16_led_init();
+
 	sei(); /* enable interrupts */
 
+	ch = 0;
 	indicator=0;
 	ch=0;
 

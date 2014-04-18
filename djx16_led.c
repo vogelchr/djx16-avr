@@ -6,7 +6,7 @@
 
 #include <string.h>
 
-#define INIT_ONES(what) do { memset(what, 0xff, sizeof(what)) } while(0)
+#define INIT_ONES(what) do { memset(what, 0xff, sizeof(what)); } while(0)
 
 void
 djx16_led_init(void)
