@@ -4,24 +4,15 @@
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 
+#include <string.h>
+
+#define INIT_ONES(what) do { memset(what, 0xff, sizeof(what)) } while(0)
+
 void
 djx16_led_init(void)
 {
-	int i;
-	djx16_hw_led_masters[0] = 0xff;
-	djx16_hw_led_masters[2] = 0xff;
-	djx16_hw_led_masters[4] = 0xff;
-	
-	for(i=0; i<8; i++){
-		if (i & 1)
-			djx16_hw_led_masters[0] &= ~(1 << i);
-		if (i & 2)
-			djx16_hw_led_masters[2] &= ~(1 << i);
-		if (i & 4)
-			djx16_hw_led_masters[4] &= ~(1 << i);
-	}
-
-
+	INIT_ONES(djx16_hw_led_masters);
+	INIT_ONES(djx16_hw_led_buf);
 }
 
 /* DJX16_7SEG_ROW latch controls the LED segment, logic 1 turns on digit
@@ -100,11 +91,11 @@ djx16_led_indicator(char index, enum ON_OFF_TOGGLE onofftoggle)
 	bit = (1<<index);
 
 	switch (onofftoggle) {
-	case LED_ON:
-		djx16_hw_led_buf[pos] &= ~bit;
-		break;
 	case LED_OFF:
 		djx16_hw_led_buf[pos] |= bit;
+		break;
+	case LED_ON:
+		djx16_hw_led_buf[pos] &= ~bit;
 		break;
 	case LED_TOGGLE:
 		djx16_hw_led_buf[pos] ^= bit;

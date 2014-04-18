@@ -4,7 +4,9 @@
 #include <avr/io.h>
 
 enum ON_OFF_TOGGLE {
-	LED_ON, LED_OFF, LED_TOGGLE
+	LED_OFF,
+	LED_ON,
+	LED_TOGGLE
 };
 
 /* order matches bit value in latch DJX16_7SEG_ROW */
