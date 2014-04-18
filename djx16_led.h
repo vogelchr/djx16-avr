@@ -3,14 +3,14 @@
 
 #include <avr/io.h>
 
-enum ON_OFF_TOGGLE {
+enum djx16_on_off_toggle {
 	LED_OFF,
 	LED_ON,
 	LED_TOGGLE
 };
 
 /* order matches bit value in latch DJX16_7SEG_ROW */
-enum DJX16_LED_POS {
+enum djx16_led_row {
 	DJX16_LED_SEG3,		/* 1<<0 = 7seg LED, rightmost digit */
 	DJX16_LED_SEG2,		/*   :   */
 	DJX16_LED_SEG1,		/*   :   */
@@ -22,7 +22,7 @@ enum DJX16_LED_POS {
 	DJX16_LED_LENGTH
 };
 
-enum DJX16_LED_INDICATORS {
+enum djx16_led_indic {
 	DJX16_LED_COLON    = 0x01,  /* group INDIC_A */
 	DJX16_LED_MANUSTEP = 0x02,
 	DJX16_LED_MANUAL   = 0x03,
@@ -66,9 +66,9 @@ extern void djx16_led_7seg_hex(char index, char nibble);
 /* set LED indicator "index" either to ON, OFF or toggle it.
  * index is 0.. DJX16_LED_NUM_INDICATORS-1
  */
-extern void djx16_led_indicator(enum DJX16_LED_INDICATORS index,
-		enum ON_OFF_TOGGLE onofftoggle);
-extern char djx16_led_indicator_get(enum DJX16_LED_INDICATORS index);
+extern void djx16_led_indicator(enum djx16_led_indic index,
+		enum djx16_on_off_toggle onofftoggle);
+extern char djx16_led_indicator_get(enum djx16_led_indic index);
 
 extern void djx16_led_master(char index, uint8_t value);
 

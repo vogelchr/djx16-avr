@@ -69,10 +69,10 @@ djx16_led_7seg_hex(char index, char nibble)
 	djx16_led_7seg(index, pgm_read_byte(font_7seg + nibble));
 }
 
-static enum DJX16_LED_POS
-djx16_led_indicator_find(enum DJX16_LED_INDICATORS index, uint8_t *bit)
+static enum djx16_led_row
+djx16_led_indicator_find(enum djx16_led_indic index, uint8_t *bit)
 {
-	enum DJX16_LED_POS pos = DJX16_LED_INDIC_A;
+	enum djx16_led_row pos = DJX16_LED_INDIC_A;
 
 	if (index >= DJX16_LED_NUM_INDICATORS)
 		return DJX16_LED_NUM_INDICATORS; /* not valid */
@@ -93,9 +93,9 @@ djx16_led_indicator_find(enum DJX16_LED_INDICATORS index, uint8_t *bit)
 
 
 void
-djx16_led_indicator(enum DJX16_LED_INDICATORS index, enum ON_OFF_TOGGLE onofftoggle)
+djx16_led_indicator(enum djx16_led_indic index, enum djx16_on_off_toggle onofftoggle)
 {
-	enum DJX16_LED_POS pos;
+	enum djx16_led_row pos;
 	unsigned char bit=0;
 
 	pos = djx16_led_indicator_find(index, &bit);
@@ -116,9 +116,9 @@ djx16_led_indicator(enum DJX16_LED_INDICATORS index, enum ON_OFF_TOGGLE onofftog
 }
 
 char
-djx16_led_indicator_get(enum DJX16_LED_INDICATORS index)
+djx16_led_indicator_get(enum djx16_led_indic index)
 {
-	enum DJX16_LED_POS pos;
+	enum djx16_led_row pos;
 	uint8_t bit;
 
 	pos = djx16_led_indicator_find(index, &bit);

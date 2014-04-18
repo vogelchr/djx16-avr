@@ -3,7 +3,7 @@
 
 #include <avr/io.h>
 
-enum DJX16_ADC_POS {
+enum djx16_adc_pos {
 	DJX16_ADC_CH0,
 	DJX16_ADC_CH1,
 	DJX16_ADC_CH2,
@@ -18,6 +18,6 @@ enum DJX16_ADC_POS {
 	DJX16_ADC_LENGTH
 };
 
-extern uint8_t djx16_adc_get(enum DJX16_ADC_POS pos);
+extern uint8_t djx16_adc_get(enum djx16_adc_pos pos);
 
 #endif
