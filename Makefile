@@ -19,7 +19,8 @@ CPPFLAGS=-I. -I$(VUSB) -DF_CPU=$(F_CPU)
 CFLAGS=-mmcu=$(DEVICE_CC) -Os -Wall -Wextra -g
 ASFLAGS=$(CFLAGS)
 
-OBJS = djx16.o djx16_hw.o djx16_led.o djx16_key.o djx16_adc.o
+OBJS = djx16.o djx16_hw.o djx16_led.o djx16_key.o djx16_adc.o \
+	djx16_output.o djx16_ui.o
 
 VPATH = $(VUSB)
 
