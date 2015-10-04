@@ -7,11 +7,13 @@ uint8_t          djx16_output[DJX16_OUTPUT_NCHANS] = {1,2,3,4,5,6,7,8,9,10,11,12
 volatile uint8_t djx16_output_state;
 
 #define DMX_BAUD             250000ULL
-#define UBRR_U2X_ON(baud)   (F_CPU/(8*(baud))-1)
-#define UBRR_U2X_OFF(baud)  (F_CPU/(16*(baud))-1)
+#define UBRR_U2X_ON(baud)   ((unsigned long long)F_CPU/(8*(unsigned long long)(baud))-1)
+#define UBRR_U2X_OFF(baud)  ((unsigned long long)F_CPU/(16*(unsigned long long)(baud))-1)
 
 static const uint16_t ubrr_val_dmx = UBRR_U2X_ON(DMX_BAUD);
-static const uint16_t ubrr_val_brk = UBRR_U2X_ON(9600); /* ~100us / bit */
+/* pausing for ~100us + ~100us delay: we send <start><5*0><5*1><2*stop> at
+   a baudrate of 50000 bps (20us per bit) */
+static const uint16_t ubrr_val_brk = UBRR_U2X_ON(50000);
 
 SIGNAL(USART0_TXC_vect){ /* data register empty */
 	uint8_t tmp = djx16_output_state;
@@ -24,7 +26,11 @@ SIGNAL(USART0_TXC_vect){ /* data register empty */
 		if (tmp == DJX16_OUTPUT_NCHANS) {
 			UBRR0H = (ubrr_val_brk >> 8) & 0x0f; /* UBRR011 ... UBRR08 */
 			UBRR0L =  ubrr_val_brk       & 0xff; /* UBRR07  ... UBRR00 */
-			UDR0 = 0xff; /* 1 stop bit ~ 100us, 8data + 2 stop pause */
+			/* at 50000 bps, 20us/bit:
+			   <--5*20=100us ----><--6*20=120us---------->
+			   <start><0><0><0><0><1><1><1><1><stop><stop>
+			*/
+			UDR0 = 0xf0;
 			tmp++;
 		} else {
 			UBRR0H = (ubrr_val_dmx >> 8) & 0x0f; /* UBRR011 ... UBRR08 */
