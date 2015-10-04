@@ -49,6 +49,11 @@ $(PROJECT).bin : $(OBJS)
 	$(SIZE) --mcu=$(DEVICE_CC) -C $^
 	$(OBJCOPY) -j .text -j .data -O ihex $^ $@ || (rm -f $@ ; false )
 
+%.raw : %.bin
+	$(ECHO) "creating $@"
+	$(SIZE) --mcu=$(DEVICE_CC) -C $^
+	$(OBJCOPY) -j .text -j .data -O binary $^ $@ || (rm -f $@ ; false )
+
 %.lst : %.bin
 	$(ECHO) "creating $@"
 	$(OBJDUMP) -S $^ >$@ || (rm -f $@ ; false )
@@ -70,4 +75,4 @@ burn : $(PROJECT).hex
 	$(AVRDUDE) $(PROGRAMMER_DUDE) -p $(DEVICE_DUDE) -U flash:w:$^
 clean :
 	$(ECHO) "creating $@"
-	@rm -f *.bak *~ *.bin *.hex *.lst *.o *.d
+	@rm -f *.bak *~ *.bin *.hex *.lst *.o *.d *.raw
