@@ -3,7 +3,8 @@
 
 #include <avr/io.h>
 
-/*
+/*      "match whole row" -----+
+ *                             v
  *       +----+----+----+----+----+----+----+----+
  * (MSB) : D7 : D6 : D5 : D4 : D3 : D2 : D1 : D0 : (LSB)
  *       +----+----+----+----+----+----+----+----+
@@ -15,7 +16,6 @@
  */
 
 #define DJX16_KEY_ROW_SHIFT	4
-
 #define DJX16_KEY_ROW(kc)	(((kc)>>DJX16_KEY_ROW_SHIFT) & 0x07)
 #define DJX16_KEY_COL(kc)	((kc) & 0x07)
 
@@ -33,6 +33,8 @@ enum djx16_key_rows {
 };
 
 enum djx16_key_names {
+	DJX16_KEY_WHOLEROW   = 0x80,
+
 	DJX16_KEY_FLASH1  = DJX16_KEYCODE(0, 0),
 	DJX16_KEY_FLASH2  = DJX16_KEYCODE(0, 1),
 	DJX16_KEY_FLASH3  = DJX16_KEYCODE(0, 2),
@@ -41,8 +43,10 @@ enum djx16_key_names {
 	DJX16_KEY_FLASH6  = DJX16_KEYCODE(0, 5),
 	DJX16_KEY_FLASH7  = DJX16_KEYCODE(0, 6),
 	DJX16_KEY_FLASH8  = DJX16_KEYCODE(0, 7),
-	DJX16_KEY_FLASH9  = DJX16_KEYCODE(1, 0),
 
+	DJX16_KEY_FLASH_ANY_A = DJX16_KEY_FLASH1 | DJX16_KEY_WHOLEROW,
+
+	DJX16_KEY_FLASH9  = DJX16_KEYCODE(1, 0),
 	DJX16_KEY_FLASH10 = DJX16_KEYCODE(1, 1),
 	DJX16_KEY_FLASH11 = DJX16_KEYCODE(1, 2),
 	DJX16_KEY_FLASH12 = DJX16_KEYCODE(1, 3),
@@ -50,6 +54,8 @@ enum djx16_key_names {
 	DJX16_KEY_FLASH14 = DJX16_KEYCODE(1, 5),
 	DJX16_KEY_FLASH15 = DJX16_KEYCODE(1, 6),
 	DJX16_KEY_FLASH16 = DJX16_KEYCODE(1, 7),
+
+	DJX16_KEY_FLASH_ANY_B = DJX16_KEY_FLASH9 | DJX16_KEY_WHOLEROW,
 
 	DJX16_KEY_LATCH9  = DJX16_KEYCODE(2, 0),
 	DJX16_KEY_LATCH10 = DJX16_KEYCODE(2, 1),
@@ -59,6 +65,8 @@ enum djx16_key_names {
 	DJX16_KEY_LATCH14 = DJX16_KEYCODE(2, 5),
 	DJX16_KEY_LATCH15 = DJX16_KEYCODE(2, 6),
 	DJX16_KEY_LATCH16 = DJX16_KEYCODE(2, 7),
+
+	DJX16_KEY_LATCH_ANY = DJX16_KEY_LATCH9 | DJX16_KEY_WHOLEROW,
 
 	DJX16_KEY_CROSS   = DJX16_KEYCODE(3, 0),
 	DJX16_KEY_PUP     = DJX16_KEYCODE(3, 1),
