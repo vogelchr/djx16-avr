@@ -20,6 +20,7 @@ extern uint8_t djx16_hw_led_masters[DJX16_N_MASTER_GROUPS*DJX16_N_MASTER_INTENS]
 
 /* multiplexed ADC data */
 extern uint8_t djx16_hw_adc[DJX16_ADC_LENGTH];
+extern uint16_t djx16_hw_adc_dirty;
 
 /* currently pressed keycode */
 extern uint8_t djx16_hw_key;

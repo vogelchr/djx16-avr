@@ -19,5 +19,5 @@ enum djx16_adc_pos {
 };
 
 extern uint8_t djx16_adc_get(enum djx16_adc_pos pos);
-
+extern uint16_t djx16_adc_get_dirty();
 #endif

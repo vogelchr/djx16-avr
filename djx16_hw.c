@@ -17,6 +17,7 @@ uint8_t djx16_hw_led_buf[DJX16_LED_LENGTH];
 uint8_t djx16_hw_led_masters[DJX16_N_MASTER_GROUPS*DJX16_N_MASTER_INTENS];
 static uint32_t djx16_hw_tick_ctr;
 uint8_t djx16_hw_adc[DJX16_ADC_LENGTH];
+uint16_t djx16_hw_adc_dirty;
 
 uint8_t djx16_hw_key;
 uint8_t djx16_hw_key_ctr;
@@ -184,8 +185,15 @@ skip_keys:
 		goto skip_adc;
 
 	if (!(count & 0x01)) {				/* read chan */
+		int8_t adc_diff;
+
 		READIN(v, PORTB, 4);
-		djx16_hw_adc[adc_chan] = v;
+		adc_diff = djx16_hw_adc[adc_chan] - v;
+
+		if ((adc_diff < -1) || (adc_diff > 1)) {
+			djx16_hw_adc[adc_chan] = v;
+			djx16_hw_adc_dirty |= (1<<adc_chan);
+		}
 	}
 
 	adc_chan++;					/* prepare next ch */
@@ -250,4 +258,3 @@ djx16_hw_init(void)
 	TIMSK |= _BV(TOIE0);
 
 }
-
