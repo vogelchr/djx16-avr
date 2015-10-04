@@ -17,6 +17,10 @@ struct djx16_ui_handler_entry {
 
 #define KEY_HANDLER(name) static char name(uint8_t key)
 
+/* *************************************************************************
+   ** Key Handlers                                                        **
+   ************************************************************************* */
+
 KEY_HANDLER(djx16_ui_handle_stby) {
 	(void)key;
 	djx16_led_indicator(DJX16_LED_STANDBY, LED_TOGGLE);
@@ -41,14 +45,29 @@ KEY_HANDLER(djx16_ui_handle_step_updown) {
 	return 0;
 }
 
+KEY_HANDLER(djx16_ui_handle_flash) {
+	djx16_led_7seg_hex(0, 2);
+	djx16_led_7seg_hex(2, (key & 0xf0) >> 4);
+	djx16_led_7seg_hex(3, key & 0x0f);
+}
+
+KEY_HANDLER(djx16_ui_handle_latch) {
+	djx16_led_7seg_hex(0, 1);
+	djx16_led_7seg_hex(2, (key & 0xf0) >> 4);
+	djx16_led_7seg_hex(3, key & 0x0f);
+}
+
 /* key handlers */
 static const struct djx16_ui_handler_entry PROGMEM djx16_ui_handler_table[] =
 {
-	{ 0x00, DJX16_KEY_PUP,     & djx16_ui_handle_pat_updown },
-	{ 0x00, DJX16_KEY_PDOWN,   & djx16_ui_handle_pat_updown },
-	{ 0x00, DJX16_KEY_SUP,     & djx16_ui_handle_step_updown },
-	{ 0x00, DJX16_KEY_SDOWN,   & djx16_ui_handle_step_updown },
-	{ 0x00, DJX16_KEY_STANDBY, & djx16_ui_handle_stby },
+	{ 0x00, DJX16_KEY_PUP,         & djx16_ui_handle_pat_updown },
+	{ 0x00, DJX16_KEY_PDOWN,       & djx16_ui_handle_pat_updown },
+	{ 0x00, DJX16_KEY_SUP,         & djx16_ui_handle_step_updown },
+	{ 0x00, DJX16_KEY_SDOWN,       & djx16_ui_handle_step_updown },
+	{ 0x00, DJX16_KEY_STANDBY,     & djx16_ui_handle_stby },
+	{ 0x00, DJX16_KEY_FLASH_ANY_A, & djx16_ui_handle_flash },
+	{ 0x00, DJX16_KEY_FLASH_ANY_B, & djx16_ui_handle_flash },
+	{ 0x00, DJX16_KEY_LATCH_ANY,   & djx16_ui_handle_latch },
 	{ 0x00, 0x00,              0 } /* --- eof --- */
 };
 
@@ -80,9 +99,15 @@ djx16_ui_run(void)
 		if (!hdlr) /* list ends with NULL handler */
 			break;
 
+		/* flash, latch occupy one logica "row" of buttons,
+		   so we can simplify the handlers for them */
+		if (handler_key & DJX16_KEY_WHOLEROW) {
+			handler_key &= ~DJX16_KEY_WHOLEROW;
+			handler_key |= (keycode & 0x07);
+		}
+
 		if (handler_key == keycode)
 			hdlr(keycode);
 		p++;
 	}
 }
-
