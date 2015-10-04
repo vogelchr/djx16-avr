@@ -13,8 +13,8 @@ U15 \RD ADC        | 5  PB4    PA3 36 |     \ AD0-Bus
 EE \CS (inv to RAM)| 7  PB6    PA5 34 |    /   SRAM + EEprom + ADC?)
 ?                  | 8  PB7    PA6 33 |   /
                    | 9  #Res   PA7 32 |  /
-                   | 10 PD0    ALE 31 |  Vcc
-                   | 11 PD1    PE1 30 |
+MIDI in  (UART Rx) | 10 PD0    ALE 31 |  Vcc
+DMX Out  (UART Tx) | 11 PD1    PE1 30 |
                    | 12 PD2    PE2 29 |
 U9 LE 7-segment    | 13 PD3    PC7 28 |
 U8 LE 7-segment    | 14 PD4    PC6 27 |
@@ -115,3 +115,12 @@ Full On               4   1
 Standby               4   6
 --------------------:---:---:
 
+Daughterboard (MIDI IO, DMX TX, Foot Pedals)
+
+JP1: 20 pin ribbon cable, nicely labeled!
+
+U3 : SN75176 Differential Bus Transceiver
+        Pin 2 (\RE) and Pin 3 (DE) == Vcc -> Driver constantly on
+        Pin 4 (D) Driver Input connected to Ribbon Cable P18 (DMX Out)
+        Pin 6 (A) -> DMX XLR Pin 3
+        Pin 7 (B) -> DMX XLR Pin 2
