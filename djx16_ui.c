@@ -2,6 +2,7 @@
 #include "djx16_key.h"
 #include "djx16_output.h"
 #include "djx16_led.h"
+#include "djx16_adc.h"
 
 #include <avr/pgmspace.h>
 
@@ -82,9 +83,22 @@ djx16_ui_init(void)
 void
 djx16_ui_run(void)
 {
-	uint8_t keycode, handler_key;
+	uint8_t keycode, handler_key, adc_val, i;
+	uint16_t dirty_adc;
 	const struct djx16_ui_handler_entry *p;
 	key_handler_ptr_t hdlr;
+
+	/* check all dirty ADCs */
+	dirty_adc = djx16_adc_get_dirty();
+	for (i=0; i<DJX16_ADC_LENGTH; i++) {
+		if (dirty_adc & (1<<i)) {
+			adc_val = djx16_adc_get(i);
+			djx16_led_7seg_hex(0, i);
+			djx16_led_7seg_hex(2, (adc_val & 0xf0) >> 4);
+			djx16_led_7seg_hex(3, adc_val & 0x0f);
+			break;
+		}
+	}
 
 	keycode = djx16_key_get();
 	if (keycode == DJX16_KEY_NONE)
