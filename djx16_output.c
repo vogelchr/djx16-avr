@@ -3,8 +3,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-uint8_t          djx16_output[DJX16_OUTPUT_NCHANS] = {1,2,3,4,5,6,7,8,9,10,11,12,13};
-volatile uint8_t djx16_output_state;
+static uint8_t djx16_output[DJX16_OUTPUT_NCHANS] = {1,2,3,4,5,6,7,8,9,10,11,12,13};
 
 #define DMX_BAUD             250000ULL
 #define UBRR_U2X_ON(baud)   ((unsigned long long)F_CPU/(8*(unsigned long long)(baud))-1)
@@ -16,6 +15,8 @@ static const uint16_t ubrr_val_dmx = UBRR_U2X_ON(DMX_BAUD);
 static const uint16_t ubrr_val_brk = UBRR_U2X_ON(50000);
 
 SIGNAL(USART0_TXC_vect){ /* data register empty */
+	static uint8_t djx16_output_state;
+
 	uint8_t tmp = djx16_output_state;
 	/* if we have finished transmitting all data, turn off transmitter
 	   and transmit complete interrupt: timer interrupt will send a break
@@ -55,4 +56,11 @@ djx16_output_init(void)
 	UCSR0C = _BV(URSEL0)|_BV(USBS0)|_BV(UCSZ01)|_BV(UCSZ00); /* 8N2 */
 
 	UDR0 = 0x00;
+}
+
+void
+djx16_output_set(uint8_t ch, uint8_t val){
+	if (ch >= DJX16_OUTPUT_NCHANS)
+		return;
+	djx16_output[ch]=val;
 }
