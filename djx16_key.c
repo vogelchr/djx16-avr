@@ -5,8 +5,6 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-uint8_t djx16_key_state;
-
 static uint8_t
 djx16_key_get_raw()
 {
@@ -24,28 +22,26 @@ djx16_key_get_raw()
 uint8_t
 djx16_key_get()
 {
+	static uint8_t djx16_key_state;
 	uint8_t ret = DJX16_KEY_NONE;
-	uint8_t state;
 
 	ret = djx16_key_get_raw();
 	if (ret == DJX16_KEY_NONE)
 		goto out;
 
-	state = djx16_key_state;
 
 	if (ret == DJX16_KEY_SHIFT) {
-		state ^= DJX16_KEY_IS_SHIFTED;
+		djx16_key_state ^= DJX16_KEY_IS_SHIFTED;
 		ret = DJX16_KEY_NONE;
 //		djx16_led_indicator(DJX16_LED_MIDI, !!(state & DJX16_KEY_IS_SHIFTED));
 		goto out;
 	}
 
-	if (state & DJX16_KEY_IS_SHIFTED) {
-		state &= ~DJX16_KEY_IS_SHIFTED;
+	if (djx16_key_state & DJX16_KEY_IS_SHIFTED) {
+		djx16_key_state &= ~DJX16_KEY_IS_SHIFTED;
 		ret   |=  DJX16_KEY_IS_SHIFTED;
 	}
 
 out:
-	djx16_key_state = state;
 	return ret;
 }
