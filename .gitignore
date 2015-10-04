@@ -1,0 +1,7 @@
+*.bak
+*.bin
+*.hex
+*.lst
+*.o
+*.d
+*.raw
